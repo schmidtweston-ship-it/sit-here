@@ -247,6 +247,42 @@
     .home-taps.late .tap {
       animation: none;
     }
+    html.bw body {
+      filter: grayscale(1);
+    }
+    .colors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 1fr;
+      gap: 8px;
+      flex: 1;
+      min-height: 18rem;
+      margin: 0.2rem 0 0.8rem;
+    }
+    .swatch {
+      border: 0;
+      border-radius: 0.55rem;
+      min-height: 5.6rem;
+      width: 100%;
+      padding: 0;
+    }
+    .blast {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+    }
+    .blast.on { display: block; }
+    .blast-back {
+      position: absolute;
+      top: calc(10px + var(--safe-top));
+      left: 16px;
+      background: none;
+      border: 0;
+      font-size: 0.95rem;
+      padding: 10px 4px;
+      letter-spacing: 0.02em;
+    }
     @media (prefers-reduced-motion: no-preference) {
       .home-taps .tap {
         opacity: 0;
@@ -255,6 +291,7 @@
       .home-taps .tap:nth-child(1) { animation-delay: 0.55s; }
       .home-taps .tap:nth-child(2) { animation-delay: 0.78s; }
       .home-taps .tap:nth-child(3) { animation-delay: 1.02s; }
+      .home-taps .tap:nth-child(4) { animation-delay: 1.22s; }
       .here { animation: in 0.6s ease both; }
     }
     @keyframes in {
@@ -282,13 +319,14 @@
       <div class="taps home-taps" id="taps">
         <button type="button" class="tap" data-go="sit">Sit with me</button>
         <button type="button" class="tap" data-go="distract">Distract me</button>
+        <button type="button" class="tap" data-go="color">Color</button>
         <button type="button" class="tap" data-go="need">What do you need right now?</button>
       </div>
       <p class="foot">Not medical care. Not a crisis line. <a href="https://988lifeline.org">988</a></p>
     </section>
 
     <section class="screen" id="sit" aria-label="Sit">
-      <button type="button" class="back" data-back>three taps</button>
+      <button type="button" class="back" data-back>back</button>
       <p class="line tiny" id="sit-line" aria-live="polite"></p>
       <div class="log" id="sit-log"></div>
       <p class="stay" id="sit-stay" aria-hidden="true"></p>
@@ -299,19 +337,20 @@
     </section>
 
     <section class="screen" id="distract" aria-label="Distract">
-      <button type="button" class="back" data-back>three taps</button>
+      <button type="button" class="back" data-back>back</button>
       <p class="line" id="distract-line" aria-live="polite"></p>
       <div class="hints" id="distract-hints"></div>
       <p class="stay" id="distract-stay" aria-hidden="true"></p>
     </section>
 
     <section class="screen" id="need" aria-label="What do you need">
-      <button type="button" class="back" data-back>three taps</button>
+      <button type="button" class="back" data-back>back</button>
       <div class="taps">
         <button type="button" class="tap" data-need="sit">sit</button>
         <button type="button" class="tap" data-need="distract">distract</button>
         <button type="button" class="tap" data-need="music">music</button>
         <button type="button" class="tap" data-need="listen">listen</button>
+        <button type="button" class="tap" data-need="color">color</button>
         <button type="button" class="tap" data-need="quiet">quiet</button>
       </div>
       <form id="need-form" style="margin-top:1.3rem">
@@ -322,7 +361,7 @@
     </section>
 
     <section class="screen" id="listen" aria-label="Listen">
-      <button type="button" class="back" data-back>three taps</button>
+      <button type="button" class="back" data-back>back</button>
       <p class="line tiny" id="listen-line" aria-live="polite">Listening.</p>
       <div class="log" id="listen-log"></div>
       <p class="stay" id="listen-stay" aria-hidden="true"></p>
@@ -333,13 +372,19 @@
     </section>
 
     <section class="screen" id="musicpick" aria-label="Music">
-      <button type="button" class="back" data-back>three taps</button>
+      <button type="button" class="back" data-back>back</button>
       <p class="line tiny">want a little music?</p>
       <div class="chips">
         <button type="button" class="chip" data-track="low">low</button>
         <button type="button" class="chip" data-track="soft">soft</button>
         <button type="button" class="chip" data-track="off">no thanks</button>
       </div>
+    </section>
+
+    <section class="screen" id="color" aria-label="Color">
+      <button type="button" class="back" data-back>back</button>
+      <p class="line tiny">Pick one.</p>
+      <div class="colors" id="color-grid"></div>
     </section>
 
     <div class="music-bar" id="music-bar">
@@ -350,6 +395,9 @@
 
   <audio id="aud-low" src="./low.wav" loop preload="auto"></audio>
   <audio id="aud-soft" src="./soft.wav" loop preload="auto"></audio>
+  <div class="blast" id="blast" hidden>
+    <button type="button" class="blast-back" id="blast-back">back</button>
+  </div>
   <p class="sr" id="live" aria-live="polite"></p>
 
   <script>
@@ -427,8 +475,18 @@
       distract: document.getElementById("distract"),
       need: document.getElementById("need"),
       listen: document.getElementById("listen"),
-      musicpick: document.getElementById("musicpick")
+      musicpick: document.getElementById("musicpick"),
+      color: document.getElementById("color")
     };
+
+    const COLORS = [
+      { hex: "#FF1B8D", name: "magenta" },
+      { hex: "#FFE600", name: "yellow" },
+      { hex: "#00E5FF", name: "cyan" },
+      { hex: "#E10600", name: "red" },
+      { hex: "#39FF14", name: "green" },
+      { hex: "#7A00FF", name: "violet" }
+    ];
 
     let mode = "home";
     let quiet = false;
@@ -454,14 +512,63 @@
     let facts = shuffle(FACTS);
     let nonsense = shuffle(NONSENSE);
 
+    function inkFor(hex) {
+      const h = hex.replace("#", "");
+      const r = parseInt(h.slice(0, 2), 16) / 255;
+      const g = parseInt(h.slice(2, 4), 16) / 255;
+      const b = parseInt(h.slice(4, 6), 16) / 255;
+      const lin = function (c) { return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+      const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+      return L > 0.46 ? "#111" : "#f4f4f4";
+    }
+
     function show(name) {
       mode = name;
       Object.keys(screens).forEach((k) => {
         screens[k].classList.toggle("on", k === name);
       });
+      document.documentElement.classList.toggle("bw", name !== "color");
       if (name === "home") {
-        document.getElementById("taps").classList.add("late");
+        document.documentElement.classList.add("bw");
+    document.getElementById("taps").classList.add("late");
       }
+    }
+
+    function paintColorGrid() {
+      const grid = document.getElementById("color-grid");
+      grid.innerHTML = "";
+      COLORS.forEach(function (c) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "swatch";
+        b.style.background = c.hex;
+        b.setAttribute("aria-label", c.name);
+        b.addEventListener("click", function () { blast(c.hex); });
+        grid.appendChild(b);
+      });
+    }
+
+    function blast(hex) {
+      const el = document.getElementById("blast");
+      el.style.background = hex;
+      el.hidden = false;
+      el.classList.add("on");
+      document.documentElement.classList.remove("bw");
+      const back = document.getElementById("blast-back");
+      back.style.color = inkFor(hex);
+      live("color");
+    }
+
+    function closeBlast() {
+      const el = document.getElementById("blast");
+      el.hidden = true;
+      el.classList.remove("on");
+      document.documentElement.classList.toggle("bw", mode !== "color");
+    }
+
+    function goColor() {
+      show("color");
+      paintColorGrid();
     }
 
     function live(msg) {
@@ -689,6 +796,10 @@
         paintDistract(/\b(nonsense|stupid|silly)\b/.test(low) ? "nonsense" : "fact");
         return;
       }
+      if (/\b(color|colour|bright|yellow|red|blast)\b/.test(low)) {
+        goColor();
+        return;
+      }
       if (/\b(sit|stay|here|with me|company|presence|lonely|alone|nobody|someone)\b/.test(low)) {
         goSit({ say: "Sitting." });
         return;
@@ -702,6 +813,7 @@
       const go = b.getAttribute("data-go");
       if (go === "sit") goSit({});
       else if (go === "distract") paintDistract("fact");
+      else if (go === "color") goColor();
       else if (go === "need") show("need");
     });
 
@@ -738,6 +850,7 @@
       else if (n === "distract") paintDistract("fact");
       else if (n === "music") { afterMusic = "sit"; show("musicpick"); }
       else if (n === "listen") goListen("Listening.");
+      else if (n === "color") goColor();
       else if (n === "quiet") goSit({ quiet: true, say: "Quiet." });
     });
 
@@ -754,6 +867,7 @@
     });
 
     document.getElementById("music-stop").addEventListener("click", stopMusic);
+    document.getElementById("blast-back").addEventListener("click", closeBlast);
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState !== "visible") return;
