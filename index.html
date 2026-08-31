@@ -247,8 +247,51 @@
     .home-taps.late .tap {
       animation: none;
     }
-    html.bw body {
+    html.bw .here,
+    html.bw .foot,
+    html.bw .grain,
+    html.bw .back,
+    html.bw .line,
+    html.bw .log,
+    html.bw .stay,
+    html.bw .row,
+    html.bw .hints,
+    html.bw .chips,
+    html.bw .ask,
+    html.bw .need-field,
+    html.bw .quiet-btn,
+    html.bw .music-bar,
+    html.bw .tap:not(.tap-color),
+    html.bw .colors {
       filter: grayscale(1);
+    }
+    .tap-color {
+      background: #FF1B8D;
+      color: #fff;
+      text-align: center;
+      border-top: 0;
+      border-radius: 0.7rem;
+      margin: 0 0 1.05rem;
+      padding: 1.45rem 0;
+      min-height: 5.6rem;
+      font-size: clamp(2.1rem, 10vw, 2.8rem);
+    }
+    .taps .tap-color { border-bottom: 0; }
+    .tap-color:active { color: #fff; }
+    .blast-hits {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: calc(14px + var(--safe-bot));
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .blast-hits button {
+      border: 0;
+      border-radius: 0.5rem;
+      min-height: 4.2rem;
+      padding: 0;
     }
     .colors {
       display: grid;
@@ -317,9 +360,9 @@
 
     <section class="screen on" id="home" aria-label="Choose">
       <div class="taps home-taps" id="taps">
+        <button type="button" class="tap tap-color" data-go="color">Color</button>
         <button type="button" class="tap" data-go="sit">Sit with me</button>
         <button type="button" class="tap" data-go="distract">Distract me</button>
-        <button type="button" class="tap" data-go="color">Color</button>
         <button type="button" class="tap" data-go="need">What do you need right now?</button>
       </div>
       <p class="foot">Not medical care. Not a crisis line. <a href="https://988lifeline.org">988</a></p>
@@ -346,11 +389,11 @@
     <section class="screen" id="need" aria-label="What do you need">
       <button type="button" class="back" data-back>back</button>
       <div class="taps">
+        <button type="button" class="tap tap-color" data-need="color">color</button>
         <button type="button" class="tap" data-need="sit">sit</button>
         <button type="button" class="tap" data-need="distract">distract</button>
         <button type="button" class="tap" data-need="music">music</button>
         <button type="button" class="tap" data-need="listen">listen</button>
-        <button type="button" class="tap" data-need="color">color</button>
         <button type="button" class="tap" data-need="quiet">quiet</button>
       </div>
       <form id="need-form" style="margin-top:1.3rem">
@@ -397,6 +440,7 @@
   <audio id="aud-soft" src="./soft.wav" loop preload="auto"></audio>
   <div class="blast" id="blast" hidden>
     <button type="button" class="blast-back" id="blast-back">back</button>
+    <div class="blast-hits" id="blast-hits"></div>
   </div>
   <p class="sr" id="live" aria-live="polite"></p>
 
@@ -548,8 +592,25 @@
       });
     }
 
+    function paintBlastHits() {
+      const row = document.getElementById("blast-hits");
+      if (row.childElementCount) return;
+      COLORS.forEach(function (c) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.style.background = c.hex;
+        b.setAttribute("aria-label", c.name);
+        b.addEventListener("click", function (e) {
+          e.stopPropagation();
+          blast(c.hex);
+        });
+        row.appendChild(b);
+      });
+    }
+
     function blast(hex) {
       const el = document.getElementById("blast");
+      paintBlastHits();
       el.style.background = hex;
       el.hidden = false;
       el.classList.add("on");
@@ -567,8 +628,7 @@
     }
 
     function goColor() {
-      show("color");
-      paintColorGrid();
+      blast(COLORS[0].hex);
     }
 
     function live(msg) {
