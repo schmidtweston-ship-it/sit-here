@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0908" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sit Here" />
+  <meta name="description" content="Someone is here." />
+  <title>Sit Here</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <style>
+    :root {
+      --ink: #0b0908;
+      --ink-2: #161210;
+      --bone: #f0e6d8;
+      --bone-dim: #c9b8a4;
+      --mute: #8a7b6c;
+      --line: #2c241e;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--ink);
+      color: var(--bone);
+    }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input, textarea {
+      font: inherit;
+      color: inherit;
+    }
+    button {
+      appearance: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .wrap {
+      min-height: 100%;
+      min-height: 100dvh;
+      max-width: 28rem;
+      margin: 0 auto;
+      padding: calc(28px + var(--safe-top)) 22px calc(22px + var(--safe-bot));
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='80' height='80' filter='url(%23n)'/></svg>");
+    }
+    .here {
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      font-size: clamp(2.05rem, 10vw, 2.85rem);
+      font-weight: 400;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      margin: 0 0 1.8rem;
+    }
+    .screen { display: none; flex: 1; flex-direction: column; }
+    .screen.on { display: flex; }
+    .taps { display: flex; flex-direction: column; }
+    .tap {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 0;
+      border-top: 1px solid var(--line);
+      padding: 1.28rem 0;
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: clamp(1.7rem, 7.4vw, 2.2rem);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: var(--bone);
+      min-height: 4.6rem;
+    }
+    .taps .tap:last-child { border-bottom: 1px solid var(--line); }
+    .tap:active { color: var(--bone-dim); }
+    .tap:focus-visible, .back:focus-visible, .quiet-btn:focus-visible, .chip:focus-visible, .send:focus-visible {
+      outline: 2px solid var(--bone-dim);
+      outline-offset: 3px;
+    }
+    .back {
+      align-self: flex-start;
+      background: none;
+      border: 0;
+      color: var(--mute);
+      padding: 8px 0 18px;
+      font-size: 0.92rem;
+      letter-spacing: 0.01em;
+    }
+    .line {
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: clamp(1.55rem, 6.5vw, 2rem);
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      min-height: 2.6em;
+      margin: 0.4rem 0 1.2rem;
+      color: var(--bone);
+    }
+    .line.tiny {
+      font-size: clamp(1.15rem, 5vw, 1.45rem);
+      color: var(--bone-dim);
+      min-height: 1.8em;
+    }
+    .stay {
+      color: var(--mute);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      min-height: 1.2em;
+      opacity: 0.55;
+      margin-top: auto;
+      padding-top: 1.4rem;
+    }
+    .said {
+      color: var(--mute);
+      font-size: 1.02rem;
+      line-height: 1.4;
+      margin: 0 0 0.55rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .ack {
+      color: var(--bone-dim);
+      font-size: 1.05rem;
+      margin: 0 0 1rem;
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+    }
+    .log { margin: 0 0 1rem; max-height: 36vh; overflow: auto; }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      margin-top: auto;
+    }
+    .row input, .row textarea {
+      flex: 1;
+      background: var(--ink-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-height: 48px;
+    }
+    textarea { resize: none; min-height: 56px; }
+    .send, .quiet-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-height: 48px;
+      color: var(--bone-dim);
+    }
+    .hints {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 0.6rem;
+    }
+    .quiet-btn.block {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      padding: 1.05rem 0;
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: clamp(1.25rem, 5.6vw, 1.55rem);
+      color: var(--bone);
+      min-height: 3.4rem;
+    }
+    .hints .quiet-btn.block:last-child { border-bottom: 1px solid var(--line); }
+    .ask {
+      color: var(--mute);
+      font-size: 1.05rem;
+      margin: 1.1rem 0 0.2rem;
+      font-family: "Iowan Old Style", Palatino, Georgia, serif;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0.7rem 0 1rem; }
+    .chip {
+      border: 1px solid var(--line);
+      background: #161210;
+      color: var(--bone);
+      border-radius: 999px;
+      padding: 10px 16px;
+      min-height: 44px;
+      font-size: 1.02rem;
+    }
+    .chip.on {
+      border-color: var(--bone-dim);
+    }
+    .music-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: var(--mute);
+      font-size: 0.82rem;
+      padding: 8px 0 0;
+    }
+    .music-bar.on { display: flex; }
+    .music-bar button {
+      background: none;
+      border: 0;
+      color: var(--bone-dim);
+      padding: 6px 0;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .foot {
+      margin-top: auto;
+      padding-top: 2.4rem;
+      color: var(--mute);
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+      line-height: 1.45;
+      opacity: 0.8;
+    }
+    .foot a { color: var(--mute); }
+    .need-field {
+      width: 100%;
+      background: var(--ink-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      min-height: 56px;
+      margin: 0.4rem 0 0.7rem;
+    }
+    .home-taps { margin-top: 0.2rem; }
+    .home-taps.late .tap {
+      animation: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .home-taps .tap {
+        opacity: 0;
+        animation: in 0.9s ease forwards;
+      }
+      .home-taps .tap:nth-child(1) { animation-delay: 0.55s; }
+      .home-taps .tap:nth-child(2) { animation-delay: 0.78s; }
+      .home-taps .tap:nth-child(3) { animation-delay: 1.02s; }
+      .here { animation: in 0.6s ease both; }
+    }
+    @keyframes in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    .sr {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="here" id="here">Someone is here.</p>
+
+    <section class="screen on" id="home" aria-label="Choose">
+      <div class="taps home-taps" id="taps">
+        <button type="button" class="tap" data-go="sit">Sit with me</button>
+        <button type="button" class="tap" data-go="distract">Distract me</button>
+        <button type="button" class="tap" data-go="need">What do you need right now?</button>
+      </div>
+      <p class="foot">Not medical care. Not a crisis line. <a href="https://988lifeline.org">988</a></p>
+    </section>
+
+    <section class="screen" id="sit" aria-label="Sit">
+      <button type="button" class="back" data-back>three taps</button>
+      <p class="line tiny" id="sit-line" aria-live="polite"></p>
+      <div class="log" id="sit-log"></div>
+      <p class="stay" id="sit-stay" aria-hidden="true"></p>
+      <form class="row" id="sit-form">
+        <input type="text" id="sit-in" maxlength="280" autocomplete="off" placeholder="say something if you want" aria-label="Say something if you want" />
+        <button type="submit" class="send">ok</button>
+      </form>
+    </section>
+
+    <section class="screen" id="distract" aria-label="Distract">
+      <button type="button" class="back" data-back>three taps</button>
+      <p class="line" id="distract-line" aria-live="polite"></p>
+      <div class="hints" id="distract-hints"></div>
+      <p class="stay" id="distract-stay" aria-hidden="true"></p>
+    </section>
+
+    <section class="screen" id="need" aria-label="What do you need">
+      <button type="button" class="back" data-back>three taps</button>
+      <div class="taps">
+        <button type="button" class="tap" data-need="sit">sit</button>
+        <button type="button" class="tap" data-need="distract">distract</button>
+        <button type="button" class="tap" data-need="music">music</button>
+        <button type="button" class="tap" data-need="listen">listen</button>
+        <button type="button" class="tap" data-need="quiet">quiet</button>
+      </div>
+      <form id="need-form" style="margin-top:1.3rem">
+        <label class="ask" for="need-in">or type</label>
+        <input class="need-field" type="text" id="need-in" maxlength="280" autocomplete="off" />
+        <button type="submit" class="quiet-btn">that's it</button>
+      </form>
+    </section>
+
+    <section class="screen" id="listen" aria-label="Listen">
+      <button type="button" class="back" data-back>three taps</button>
+      <p class="line tiny" id="listen-line" aria-live="polite">Listening.</p>
+      <div class="log" id="listen-log"></div>
+      <p class="stay" id="listen-stay" aria-hidden="true"></p>
+      <form class="row" id="listen-form">
+        <textarea id="listen-in" maxlength="800" rows="2" placeholder="I'm here." aria-label="Say it"></textarea>
+        <button type="submit" class="send">ok</button>
+      </form>
+    </section>
+
+    <section class="screen" id="musicpick" aria-label="Music">
+      <button type="button" class="back" data-back>three taps</button>
+      <p class="line tiny">want a little music?</p>
+      <div class="chips">
+        <button type="button" class="chip" data-track="low">low</button>
+        <button type="button" class="chip" data-track="soft">soft</button>
+        <button type="button" class="chip" data-track="off">no thanks</button>
+      </div>
+    </section>
+
+    <div class="music-bar" id="music-bar">
+      <span id="music-label">music</span>
+      <button type="button" id="music-stop">stop</button>
+    </div>
+  </div>
+
+  <audio id="aud-low" src="./low.wav" loop preload="auto"></audio>
+  <audio id="aud-soft" src="./soft.wav" loop preload="auto"></audio>
+  <p class="sr" id="live" aria-live="polite"></p>
+
+  <script>
+  (function () {
+    const FACTS = [
+      "Cows have best friends. They get weird when they're apart.",
+      "A shrimp's heart is in its head. That's the whole fact.",
+      "Wombats poop cubes. Committed to the bit.",
+      "Otters hold hands so they don't drift. That's it.",
+      "Bananas are berries. Strawberries aren't. The committee was unwell.",
+      "There's a place called Hell in Norway. It's fine.",
+      "Octopuses taste with their arms. Grocery shopping would be a lot.",
+      "A day on Venus is longer than its year. Time is a rumor.",
+      "Honey never spoils. Jars from tombs were still edible. That's a flex.",
+      "A group of pugs is a grumble. Accurate.",
+      "The inventor of the Pringles can was buried in one. A choice was made.",
+      "Sea otters keep a favorite rock. In a pocket. Of skin.",
+      "Cats can't taste sweet. They don't know and they don't care.",
+      "Scotland has 421 words for snow. Weather as a personality.",
+      "A flamingo's kneecap is where you'd guess the ankle is. The whole bird is a lie.",
+      "The shortest war lasted 38 minutes. Then everyone went home.",
+      "Rats laugh when you tickle them. It's ultrasonic. They still count.",
+      "A cloud can weigh as much as a jumbo jet and still just hang there.",
+      "Mantis shrimp punch as fast as a bullet. They are not in a mood.",
+      "A group of flamingos is a flamboyance. They know.",
+      "Turtles can take in air through their butts. Science is not glamorous.",
+      "There's a parking spot that sold for more than the house next to it. The house was fine.",
+      "An albatross can sleep while flying. Rude, honestly.",
+      "The wood frog freezes solid in winter and then clocks back in. No notes.",
+      "A snail can sleep for three years. We don't have to tell anyone.",
+      "Mosquitoes are more attracted to people who just ate banana. The banana did that.",
+      "A narwhal's tusk is a tooth. A long, committed tooth.",
+      "Bees can recognize human faces. They are taking notes.",
+      "The moon has moonquakes. Even quiet places fidget.",
+      "A group of ravens is an unkindness. Ravens did not vote on this."
+    ];
+    const NONSENSE = [
+      "The spoon is considering a career change.",
+      "I have been thinking about the letter G. That's the whole thought.",
+      "If chairs could talk they would complain about sitting. We don't have to tell them.",
+      "Somewhere a moth is hitting a lamp like it has a plan.",
+      "The fridge light is having a private moment.",
+      "I named a dust bunny. It didn't ask.",
+      "Two clouds just ignored each other on purpose.",
+      "The left sock has unionized.",
+      "A pigeon outside is late for nothing.",
+      "I'm going to keep talking about nothing. That's the deal.",
+      "The word cupboard is two rooms that never meet.",
+      "A houseplant is blinking first.",
+      "I counted a crack in the ceiling. It was one crack.",
+      "The teapot believes in itself. Unrelated.",
+      "Someone named a paint color After the Rain and then it was just gray.",
+      "A remote is under a couch cushion living its best life.",
+      "The letter Q is always dragging U into things.",
+      "I respect a brick. It showed up and stayed.",
+      "A shopping cart with a bad wheel has a whole personality.",
+      "The moon is doing a shift. Same as last night."
+    ];
+    const SIT_LINES = [
+      "Still here.",
+      "Right here.",
+      "Yeah.",
+      "Not going.",
+      "Same chair.",
+      "With you.",
+      "Still.",
+      "Here.",
+      "Mm.",
+      "Yep."
+    ];
+
+    const screens = {
+      home: document.getElementById("home"),
+      sit: document.getElementById("sit"),
+      distract: document.getElementById("distract"),
+      need: document.getElementById("need"),
+      listen: document.getElementById("listen"),
+      musicpick: document.getElementById("musicpick")
+    };
+
+    let mode = "home";
+    let quiet = false;
+    let startedAt = 0;
+    let sitTimer = 0;
+    let sitLineTimer = 0;
+    let wake = null;
+    let factI = 0;
+    let nonI = 0;
+    let distractKind = "fact";
+    let osc = null;
+    let musicName = "";
+    let afterMusic = "sit";
+
+    function shuffle(a) {
+      const b = a.slice();
+      for (let i = b.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = b[i]; b[i] = b[j]; b[j] = t;
+      }
+      return b;
+    }
+    let facts = shuffle(FACTS);
+    let nonsense = shuffle(NONSENSE);
+
+    function show(name) {
+      mode = name;
+      Object.keys(screens).forEach((k) => {
+        screens[k].classList.toggle("on", k === name);
+      });
+      if (name === "home") {
+        document.getElementById("taps").classList.add("late");
+      }
+    }
+
+    function live(msg) {
+      const el = document.getElementById("live");
+      el.textContent = "";
+      el.textContent = msg;
+    }
+
+    async function keepAwake() {
+      try {
+        if (!navigator.wakeLock || !navigator.wakeLock.request) return;
+        wake = await navigator.wakeLock.request("screen");
+      } catch (e) {}
+    }
+
+    function stayText(el) {
+      if (!startedAt || !el) return;
+      const m = Math.floor((Date.now() - startedAt) / 60000);
+      if (m < 1) { el.textContent = ""; return; }
+      el.textContent = m === 1 ? "1 min" : (m + " min");
+    }
+
+    function startStay() {
+      startedAt = Date.now();
+      clearInterval(sitTimer);
+      sitTimer = setInterval(function () {
+        stayText(document.getElementById("sit-stay"));
+        stayText(document.getElementById("listen-stay"));
+        stayText(document.getElementById("distract-stay"));
+      }, 15000);
+      keepAwake();
+    }
+
+    function clearSitLineTimer() {
+      clearTimeout(sitLineTimer);
+      sitLineTimer = 0;
+    }
+
+    function scheduleSitLine() {
+      clearSitLineTimer();
+      if (quiet) return;
+      const wait = 14000 + Math.random() * 28000;
+      sitLineTimer = setTimeout(function () {
+        const el = document.getElementById("sit-line");
+        const line = SIT_LINES[Math.floor(Math.random() * SIT_LINES.length)];
+        el.textContent = line;
+        live(line);
+        scheduleSitLine();
+      }, wait);
+    }
+
+    function goSit(opts) {
+      opts = opts || {};
+      quiet = !!opts.quiet;
+      show("sit");
+      startStay();
+      const line = document.getElementById("sit-line");
+      line.textContent = opts.say || (quiet ? "" : "");
+      if (opts.say) live(opts.say);
+      document.getElementById("sit-log").innerHTML = "";
+      document.getElementById("sit-stay").textContent = "";
+      document.getElementById("sit-in").value = "";
+      scheduleSitLine();
+    }
+
+    function nextDistract(kind) {
+      distractKind = kind;
+      if (kind === "fact") {
+        if (factI >= facts.length) { facts = shuffle(FACTS); factI = 0; }
+        return facts[factI++];
+      }
+      if (nonI >= nonsense.length) { nonsense = shuffle(NONSENSE); nonI = 0; }
+      return nonsense[nonI++];
+    }
+
+    function renderDistractHints() {
+      const box = document.getElementById("distract-hints");
+      const other = distractKind === "fact"
+        ? { kind: "nonsense", label: "want me to just keep talking nonsense?" }
+        : { kind: "fact", label: "want a dumb fact?" };
+      box.innerHTML = "";
+      function add(label, fn) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "quiet-btn block";
+        b.textContent = label;
+        b.addEventListener("click", fn);
+        box.appendChild(b);
+      }
+      add("another", function () { paintDistract(distractKind); });
+      add(other.label, function () { paintDistract(other.kind); });
+      if (!musicName) add("want a little music?", function () { afterMusic = "distract"; show("musicpick"); });
+      add("skip", function () { paintDistract(distractKind); });
+    }
+
+    function paintDistract(kind) {
+      show("distract");
+      if (!startedAt) startStay();
+      const text = nextDistract(kind);
+      document.getElementById("distract-line").textContent = text;
+      live(text);
+      renderDistractHints();
+    }
+
+    function goListen(say) {
+      show("listen");
+      startStay();
+      document.getElementById("listen-line").textContent = say || "Listening.";
+      document.getElementById("listen-log").innerHTML = "";
+      document.getElementById("listen-in").value = "";
+      live(say || "Listening.");
+    }
+
+    function stopOsc() {
+      if (!osc) return;
+      try {
+        osc.oscs.forEach(function (o) { o.stop(); });
+        osc.ctx.close();
+      } catch (e) {}
+      osc = null;
+    }
+
+    function startOsc(kind) {
+      stopOsc();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const g = ctx.createGain();
+      g.gain.value = 0.04;
+      g.connect(ctx.destination);
+      const freqs = kind === "low" ? [55, 82.5] : [98, 147];
+      const oscs = freqs.map(function (f, i) {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.value = f;
+        const og = ctx.createGain();
+        og.gain.value = i === 0 ? 0.7 : 0.4;
+        o.connect(og);
+        og.connect(g);
+        o.start();
+        return o;
+      });
+      osc = { ctx: ctx, oscs: oscs };
+    }
+
+    function stopMusic() {
+      const low = document.getElementById("aud-low");
+      const soft = document.getElementById("aud-soft");
+      try { low.pause(); low.currentTime = 0; } catch (e) {}
+      try { soft.pause(); soft.currentTime = 0; } catch (e) {}
+      stopOsc();
+      musicName = "";
+      document.getElementById("music-bar").classList.remove("on");
+    }
+
+    function playTrack(kind) {
+      stopMusic();
+      if (kind === "off") {
+        if (mode === "musicpick") {
+          if (afterMusic === "distract") paintDistract(distractKind);
+          else goSit({ say: "" });
+        }
+        return;
+      }
+      const el = document.getElementById(kind === "low" ? "aud-low" : "aud-soft");
+      const tryFile = el.play();
+      const done = function () {
+        musicName = kind;
+        document.getElementById("music-label").textContent = kind;
+        document.getElementById("music-bar").classList.add("on");
+        if (mode === "musicpick" || mode === "need") {
+          if (afterMusic === "distract") paintDistract(distractKind);
+          else goSit({ say: "" });
+        }
+      };
+      if (tryFile && tryFile.then) {
+        tryFile.then(done).catch(function () {
+          startOsc(kind);
+          done();
+        });
+      } else {
+        startOsc(kind);
+        done();
+      }
+    }
+
+    function hear(logId, text) {
+      const log = document.getElementById(logId);
+      const p = document.createElement("p");
+      p.className = "said";
+      p.textContent = text;
+      const a = document.createElement("p");
+      a.className = "ack";
+      a.textContent = "Heard you.";
+      log.appendChild(p);
+      log.appendChild(a);
+      log.scrollTop = log.scrollHeight;
+      live("Heard you.");
+    }
+
+    const HARM = /\b(kill(?:ing)? myself|suicide|i want to die|end it|overdose)\b/i;
+
+    function followNeed(raw) {
+      const t = (raw || "").trim();
+      if (!t) { goSit({}); return; }
+      const low = t.toLowerCase();
+      if (HARM.test(low)) {
+        goSit({ say: "Heard you." });
+        return;
+      }
+      if (/\b(quiet|silence|hush|shh|stop talking|no talking|be still)\b/.test(low)) {
+        goSit({ quiet: true, say: "Quiet." });
+        return;
+      }
+      if (/\b(music|song|tune|hum)\b/.test(low)) {
+        afterMusic = "sit";
+        show("musicpick");
+        return;
+      }
+      if (/\b(listen|hear me|talk to me|tell you|vent)\b/.test(low)) {
+        goListen("Listening.");
+        return;
+      }
+      if (/\b(distract|funny|joke|fact|nonsense|stupid|dumb|laugh|silly|something else|talk about)\b/.test(low)) {
+        paintDistract(/\b(nonsense|stupid|silly)\b/.test(low) ? "nonsense" : "fact");
+        return;
+      }
+      if (/\b(sit|stay|here|with me|company|presence|lonely|alone|nobody|someone)\b/.test(low)) {
+        goSit({ say: "Sitting." });
+        return;
+      }
+      goSit({ say: "Heard you." });
+    }
+
+    document.getElementById("taps").addEventListener("click", function (e) {
+      const b = e.target.closest("[data-go]");
+      if (!b) return;
+      const go = b.getAttribute("data-go");
+      if (go === "sit") goSit({});
+      else if (go === "distract") paintDistract("fact");
+      else if (go === "need") show("need");
+    });
+
+    document.querySelectorAll("[data-back]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        clearSitLineTimer();
+        show("home");
+      });
+    });
+
+    document.getElementById("sit-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const inp = document.getElementById("sit-in");
+      const t = inp.value.trim();
+      if (!t) return;
+      hear("sit-log", t);
+      inp.value = "";
+    });
+
+    document.getElementById("listen-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const inp = document.getElementById("listen-in");
+      const t = inp.value.trim();
+      if (!t) return;
+      hear("listen-log", t);
+      inp.value = "";
+    });
+
+    document.getElementById("need").addEventListener("click", function (e) {
+      const b = e.target.closest("[data-need]");
+      if (!b) return;
+      const n = b.getAttribute("data-need");
+      if (n === "sit") goSit({ say: "Sitting." });
+      else if (n === "distract") paintDistract("fact");
+      else if (n === "music") { afterMusic = "sit"; show("musicpick"); }
+      else if (n === "listen") goListen("Listening.");
+      else if (n === "quiet") goSit({ quiet: true, say: "Quiet." });
+    });
+
+    document.getElementById("need-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      followNeed(document.getElementById("need-in").value);
+      document.getElementById("need-in").value = "";
+    });
+
+    document.getElementById("musicpick").addEventListener("click", function (e) {
+      const b = e.target.closest("[data-track]");
+      if (!b) return;
+      playTrack(b.getAttribute("data-track"));
+    });
+
+    document.getElementById("music-stop").addEventListener("click", stopMusic);
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible") return;
+      if (mode === "sit" || mode === "listen" || mode === "distract") keepAwake();
+    });
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(function () {});
+    }
+  })();
+  </script>
+</body>
+</html>
