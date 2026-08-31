@@ -1,5 +1,5 @@
 /* Sit Here. Same-origin only. Cache name is the version. */
-const CACHE = 'sit-here-v1';
+const CACHE = 'sit-here-v2';
 const SHELL = [
   './',
   './index.html',
